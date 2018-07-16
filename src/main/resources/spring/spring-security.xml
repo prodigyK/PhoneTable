@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-3.2.xsd
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.3.xsd">
+
+    <http auto-config="true" use-expressions="true">
+
+        <access-denied-handler error-page="/accessDenied"/>
+
+        <intercept-url pattern="/*" access="permitAll()"/>
+        <intercept-url pattern="/admin/login" access="permitAll()" />
+        <intercept-url pattern="/admin/main" access="isAuthenticated()"/>
+        <!--<intercept-url pattern="/admin/success" access="permitAll()" />-->
+        <!--<intercept-url pattern="/admin/main" access="hasRole('ROLE_PHONE_USERS')" />-->
+
+        <form-login login-page='/admin/login'
+                    default-target-url="/admin/success"
+                    authentication-failure-url="/admin/login?error=true"
+                    username-parameter="user_login"
+                    password-parameter="password_login"/>
+
+        <logout invalidate-session="true"
+                logout-success-url="/"
+                logout-url="/j_spring_security_logout" delete-cookies="JSESSIONID"/>
+
+
+    </http>
+
+    <beans:bean id="props_security" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <beans:property name="location" value="classpath:ldap.properties" />
+    </beans:bean>
+
+
+    <authentication-manager>
+
+        <authentication-provider>
+            <user-service>
+                <user name="user" password="${user.default}" authorities="IS_AUTHENTICATED_FULLY" />
+            </user-service>
+        </authentication-provider>
+
+        <ldap-authentication-provider
+                user-search-filter="(sAMAccountName={0})"
+                user-search-base="${ldap.user.search.base}"
+                group-search-filter="(member={0})"
+                group-search-base="${ldap.group.search.base}"
+                group-role-attribute="cn"
+                role-prefix="ROLE_">
+        </ldap-authentication-provider>
+
+    </authentication-manager>
+
+    <ldap-server url="${ldap.server}" manager-dn="${ldap.login}"
+                 manager-password="${ldap.password}"/>
+
+
+</beans:beans>
